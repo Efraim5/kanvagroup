@@ -8,7 +8,7 @@ st.write(
     "By Group 5 Kanva. Team Members: Kevin William, Veraldo Efraim, Novisna Lintang Negari, Adila."
 )
 st.sidebar.title("Main Menu")
-page = st.sidebar.radio("Go to", ["Home", "Goal", "EDA & Data Pre-processing","Prediksi Harga","Business Recommendation","Conclusion"])
+page = st.sidebar.radio("Go to", ["Home", "Goal", "EDA & Data Pre-processing","Business Recommendation","Conclusion"])
 
 # Display different pages based on selection
 
