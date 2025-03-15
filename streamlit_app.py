@@ -7,14 +7,15 @@ st.title("🏠Optimalisasi Harga Properti Airbnb di beberapa kota di Eropa")
 st.write(
     "By Group 5 Kanva. Team Members: Kevin William, Veraldo Efraim, Novisna Lintang Negari, Adila."
 )
-st.sidebar.title("🔹 Main Menu")
-page = st.sidebar.radio("Go to", ["Home", "Goal", "Conclusion","EDA & Data Pre-processing","Prediksi Harga"])
+st.sidebar.title("Main Menu")
+page = st.sidebar.radio("Go to", ["Home", "Goal", "EDA & Data Pre-processing","Prediksi Harga","Business Recommendation","Conclusion"])
 
 # Display different pages based on selection
 
 if page =="Home":
     st.title("Price Reasonable")
     df = pd.read_csv('combined_all_data.csv')
+
 
     # Clean and prepare
     df_clean = df.dropna(subset=['realSum', 'person_capacity', 'guest_satisfaction_overall'])
@@ -24,55 +25,129 @@ if page =="Home":
     df_clean['price_reasonable'] = df_clean['price_per_person'].between(30, 90)
     reasonable_pct = df_clean['price_reasonable'].mean() * 100
     df_clean['price_level'] = pd.cut(
-    df_clean['price_per_person'],
-    bins=[0, 30, 60, 90, 9999],
-    labels=['Low', 'Moderate', 'High', 'Very High']  )
+        df_clean['price_per_person'],
+        bins=[0, 30, 60, 90, 9999],
+        labels=['Low', 'Moderate', 'High', 'Very High']  )
 
     # Calculate average guest satisfaction by price level
     satisfaction_by_price = df_clean.groupby('price_level')['guest_satisfaction_overall'].mean()
 
-    # Display results
+    #   Display results
     st.write(f"### ✅ Reasonable Price Listings: {reasonable_pct:.1f}%")
-    st.write("### 📊 Guest Satisfaction by Price Level")
-    st.dataframe(satisfaction_by_price)
+    col1, col2, col3= st.columns(3) 
+    with col1:
+        st.write("### 📊 Guest Satisfaction by Price Level")
+        st.dataframe(satisfaction_by_price)
 
-    # Visualization 
-    st.bar_chart(satisfaction_by_price)
+        # Visualization 
+        st.bar_chart(satisfaction_by_price)
 
-    # Preprocessing
-    df_clean = df.dropna(subset=['realSum', 'person_capacity', 'guest_satisfaction_overall'])
-    df_clean['price_per_person'] = df_clean['realSum'] / df_clean['person_capacity']
-    df_clean['price_reasonable'] = df_clean['price_per_person'].between(30, 90)
+    with col2:
+        # Preprocessing
+        df_clean = df.dropna(subset=['realSum', 'person_capacity', 'guest_satisfaction_overall'])
+        df_clean['price_per_person'] = df_clean['realSum'] / df_clean['person_capacity']
+        df_clean['price_reasonable'] = df_clean['price_per_person'].between(30, 90)
 
-    # Count reasonable vs unreasonable listings
-    reasonable = df_clean['price_reasonable'].sum()
-    unreasonable = len(df_clean) - reasonable
+        # Count reasonable vs unreasonable listings
+        reasonable = df_clean['price_reasonable'].sum()
+        unreasonable = len(df_clean) - reasonable
 
-    # Pie chart setup
-    labels = ['Reasonable Price', 'Unreasonable Price']
-    sizes = [reasonable, unreasonable]
-    colors = ['#4CAF50', '#E0E0E0']
-    explode = (0.1, 0)  # Highlight reasonable prices
+        # Pie chart setup
+        labels = ['Reasonable Price', 'Unreasonable Price']
+        sizes = [reasonable, unreasonable]
+        colors = ['#4CAF50', '#E0E0E0']
+        explode = (0.1, 0)  # Highlight reasonable prices
 
-    # Plotting pie chart
-    fig, ax = plt.subplots(figsize=(6, 6))
-    wedges, texts, autotexts = ax.pie(
-        sizes, labels=labels, colors=colors, explode=explode,
-        autopct='%1.1f%%', startangle=140, textprops={'fontsize': 12}
-        )
+        # Plotting pie chart
+        fig, ax = plt.subplots(figsize=(6, 6))
+        wedges, texts, autotexts = ax.pie(
+            sizes, labels=labels, colors=colors, explode=explode,
+            autopct='%1.1f%%', startangle=140, textprops={'fontsize': 12}
+            )
 
-    # Styling
-    plt.setp(autotexts, size=14, weight="bold", color="white")
-    ax.set_title('📊 Listing Price Reasonability', fontsize=16, fontweight='bold')
-    ax.axis('equal')  # Ensure circular pie chart
+        # Styling
+        plt.setp(autotexts, size=14, weight="bold", color="white")
+        ax.set_title('📊 Listing Price Reasonability', fontsize=16, fontweight='bold')
+        ax.axis('equal')  # Ensure circular pie chart
 
-    # Display results
-    st.write("### ✅ Price Reasonability Analysis")
-    st.write(f"🔹 **Reasonable Listings:** {reasonable} ({(reasonable / len(df_clean)) * 100:.1f}%)")
-    st.write(f"🔹 **Unreasonable Listings:** {unreasonable} ({(unreasonable / len(df_clean)) * 100:.1f}%)")
+        # Display results
+        st.write("### ✅ Price Reasonability Analysis")
+        st.write(f"🔹 **Reasonable Listings:** {reasonable} ({(reasonable / len(df_clean)) * 100:.1f}%)")
+        st.write(f"🔹 **Unreasonable Listings:** {unreasonable} ({(unreasonable / len(df_clean)) * 100:.1f}%)")
 
-    # Show Pie Chart 
-    st.pyplot(fig)
+        # Show Pie Chart 
+        st.pyplot(fig)
+
+    with col3:
+            df['price_per_person'] = df['realSum'] / df['person_capacity']
+            #Filter out outliers (above €200 per person)
+            df_filtered = df[df['price_per_person'] <= 200]
+            # Create histogram
+            fig, ax = plt.subplots(figsize=(8, 5))
+            ax.hist(df_filtered['price_per_person'], bins=30, color='#008B8B', edgecolor='black')
+
+            # Highlight reasonable price range (€30–90)
+            ax.axvspan(30, 90, color='lightcoral', alpha=0.3, label='Reasonable Range (€30–90)')
+
+            # Labels and title
+            ax.set_title("Distribution of Price per Person")
+            ax.set_xlabel("Price per Person (€)")
+            ax.set_ylabel("Number of Listings")
+            ax.legend()
+    
+            plt.tight_layout()
+
+
+            # Ensure necessary columns exist
+            required_columns = {'realSum', 'person_capacity'}
+            if not required_columns.issubset(df.columns):
+                st.error(f"CSV file must contain columns: {required_columns}")
+            else:
+                # Calculate price per person
+                df['price_per_person'] = df['realSum'] / df['person_capacity']
+
+                # Filter out outliers (above €200 per person)
+                df_filtered = df[df['price_per_person'] <= 200]
+
+                # Create histogram
+            fig, ax = plt.subplots(figsize=(8, 5))
+            ax.hist(df_filtered['price_per_person'], bins=30, color='#008B8B', edgecolor='black')
+
+            # Highlight reasonable price range (€30–90)
+            ax.axvspan(30, 90, color='lightcoral', alpha=0.3, label='Reasonable Range (€30–90)')
+
+            # Labels and title
+            ax.set_title("Distribution of Price per Person")
+            ax.set_xlabel("Price per Person (€)")
+            ax.set_ylabel("Number of Listings")
+            ax.legend()
+        
+            plt.tight_layout()
+
+            # Show Plot
+            st.write(f"### 💰 Distribution of Price per Person")
+            st.pyplot(fig)
+
+    with col3: 
+        # 📊 Price Per Person Analysis CODE
+        # Calculate price per person
+        df['price_per_person'] = df['realSum'] / df['person_capacity']
+        df['price_reasonable'] = df['price_per_person'].between(0, 200)
+
+        # Create Histogram
+        fig, ax = plt.subplots(figsize=(8, 5))
+        ax.hist(df['price_per_person'], bins=100, color='teal', alpha=0.8, edgecolor='black')
+        ax.axvspan(30, 90, color='red', alpha=0.3, label='Reasonable Range (€30–90)')
+        ax.set_title('Distribution of Price per Person')
+        ax.set_xlabel('Price per Person (€)')
+        ax.set_ylabel('Number of Listings')
+        ax.set_xlim(0, 700)
+        ax.legend()
+        ax.grid(True, linestyle='--', alpha=0.5)
+  
+        # Show plot
+        st.write(f"### 📊 Price Per Person Analysis")
+        st.pyplot(fig)
 
     # Tambahkan slider untuk mengatur rentang harga "reasonable"
     # Price reasonability classification
@@ -81,25 +156,7 @@ if page =="Home":
         min_value=0, max_value=200, value=(30, 90)
         )
 
-    # 📊 Price Per Person Analysis CODE
-    # Calculate price per person
-    df['price_per_person'] = df['realSum'] / df['person_capacity']
-    df['price_reasonable'] = df['price_per_person'].between(min_price, max_price)
 
-    # Create Histogram
-    fig, ax = plt.subplots(figsize=(8, 5))
-    ax.hist(df['price_per_person'], bins=100, color='teal', alpha=0.8, edgecolor='black')
-    ax.axvspan(30, 90, color='red', alpha=0.3, label='Reasonable Range (€30–90)')
-    ax.set_title('Distribution of Price per Person')
-    ax.set_xlabel('Price per Person (€)')
-    ax.set_ylabel('Number of Listings')
-    ax.set_xlim(0, 700)
-    ax.legend()
-    ax.grid(True, linestyle='--', alpha=0.5)
-  
-    # Show plot
-    st.write(f"### 📊 Price Per Person Analysis")
-    st.pyplot(fig)
 
     # 🏠 Room Type vs Harga Reasonable
     # Tambahkan kolom price per person & label reasonable
@@ -173,37 +230,6 @@ if page =="Home":
     ax.legend()
     
     plt.tight_layout()
-
-
-    # Ensure necessary columns exist
-    required_columns = {'realSum', 'person_capacity'}
-    if not required_columns.issubset(df.columns):
-        st.error(f"CSV file must contain columns: {required_columns}")
-    else:
-        # Calculate price per person
-        df['price_per_person'] = df['realSum'] / df['person_capacity']
-
-        # Filter out outliers (above €200 per person)
-        df_filtered = df[df['price_per_person'] <= 200]
-
-        # Create histogram
-        fig, ax = plt.subplots(figsize=(8, 5))
-        ax.hist(df_filtered['price_per_person'], bins=30, color='#008B8B', edgecolor='black')
-
-        # Highlight reasonable price range (€30–90)
-        ax.axvspan(30, 90, color='lightcoral', alpha=0.3, label='Reasonable Range (€30–90)')
-
-        # Labels and title
-        ax.set_title("Distribution of Price per Person")
-        ax.set_xlabel("Price per Person (€)")
-        ax.set_ylabel("Number of Listings")
-        ax.legend()
-        
-        plt.tight_layout()
-
-        # Show Plot
-        st.write(f"### 💰 Distribution of Price per Person")
-        st.pyplot(fig)
 
     # 📊 Capacity vs Reasonable Price Listings CODE
     # Tambahkan kolom price per person & label reasonable
@@ -398,45 +424,6 @@ elif page == "Goal":
     st.title("Goal")
     st.write("Menentukan harga optimal bagi pelanggan agar host dapat menetapkan biaya sewa yang lebih menguntungkan.")
 
-elif page == "Conclusion":
-    st.title("Analisis Harga Reasonable")
-    df = pd.read_csv('combined_all_data.csv')
-    # Encode Room Type
-    df["room_type_encoded"] = df["room_type"].astype("category").cat.codes
-
-    # Pilih fitur untuk prediksi
-    X = df[["person_capacity", "room_type_encoded"]]
-    y = df["realSum"]
-
-    # Train model
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    model = LinearRegression()
-    model.fit(X_train, y_train)
-
-    # Tambahkan slider untuk memilih rentang harga
-    min_price, max_price = st.slider('Rentang Harga per Orang (€)', 10, 200, (30, 90))
-
-    # Hitung harga per orang dan tandai harga reasonable
-    df['price_per_person'] = df['realSum'] / df['person_capacity']
-    df['price_reasonable'] = (df['price_per_person'].between(min_price, max_price)).astype(int)
-
-    # Hitung proporsi listing reasonable berdasarkan Room Type
-    room_group = df.dropna(subset=['room_type']).groupby('room_type')['price_reasonable'].mean().sort_values()
-
-    # Buat dan tampilkan plot
-    fig, ax = plt.subplots(figsize=(8, 5))
-    bars = ax.barh(room_group.index, room_group.values * 100, color="#027A94")
-    ax.set_xlabel("% Listing dengan Harga Reasonable")
-    ax.set_title("Room Type vs Harga Reasonable")
-    ax.grid(axis='x', linestyle='--', alpha=0.6)
-
-    for bar in bars:
-        ax.text(bar.get_width() + 1, bar.get_y() + bar.get_height()/2, f"{bar.get_width():.1f}%", va='center')
-
-    st.write("### 📊 Room Type vs Harga Reasonable")
-    st.pyplot(fig)
-
-
 elif page == "EDA & Data Pre-processing":
     st.title("EDA & Data Pre-processing")
     # Membaca dataset
@@ -533,3 +520,85 @@ elif page == "EDA & Data Pre-processing":
 
     # Tampilkan plot 
     st.pyplot(fig)
+
+    features_to_check = [
+        'realSum', 'person_capacity', 'bedrooms', 'cleanliness_rating',
+        'guest_satisfaction_overall', 'dist', 'metro_dist', 'attr_index', 'rest_index'
+    ]
+    
+    df_clean = df[features_to_check].dropna()
+    
+    # Tampilkan preview data
+    st.write("### 📋 Data Preview")
+    st.dataframe(df_clean.head())
+    
+    #   Pilih fitur untuk visualisasi boxplot
+    selected_feature = st.selectbox("Pilih fitur untuk Boxplot", features_to_check)
+    
+    # Buat plot
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.boxplot(df_clean[selected_feature], vert=False)
+    ax.set_title(f"Boxplot: {selected_feature}")
+    ax.set_xlabel(selected_feature)
+    
+    st.pyplot(fig)
+
+   # Menghapus outlier ekstrim dari realSum (misalnya > 3000)
+    df_cleaned = df[df['realSum'] <= 3000]
+    
+    # Fitur numerik yang relevan
+    relevant_features = [
+        'realSum', 'person_capacity', 'bedrooms', 'cleanliness_rating',
+        'guest_satisfaction_overall', 'dist', 'metro_dist',
+        'attr_index', 'rest_index'
+    ]
+    
+    # Menyalin subset data
+    df_clean = df_cleaned[relevant_features].copy()
+    
+    # Menghapus outlier menggunakan metode IQR
+    for col in df_clean.columns:
+        Q1 = df_clean[col].quantile(0.25)
+        Q3 = df_clean[col].quantile(0.75)
+        IQR = Q3 - Q1
+        lower_bound = Q1 - 1.5 * IQR
+        upper_bound = Q3 + 1.5 * IQR
+        df_clean = df_clean[(df_clean[col] >= lower_bound) & (df_clean[col] <= upper_bound)]
+    
+    # Menampilkan hasil dalam bentuk boxplot
+    st.write("### Boxplot Setelah Menghapus Outlier")
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.boxplot(df_clean.values, vert=False, labels=df_clean.columns)
+    plt.xticks(rotation=45)
+    st.pyplot(fig)
+
+    col1, col2, col3 = st.columns(3)  
+    
+
+elif page == "Business Recommendation":
+    st.markdown("<h1 style='text-align: center; color: white;'>Business Recommendation</h1>", unsafe_allow_html=True)
+    st.markdown("""
+    ### 📈 **Strategi Optimasi Harga**
+    
+    🔹 **Sesuaikan Harga Secara Optimal**  
+    Sesuaikan harga berdasarkan faktor utama seperti **lokasi, rating kebersihan, dan tipe kamar** agar selaras dengan tren pasar.  
+    Gunakan **model harga dinamis** untuk memaksimalkan pendapatan berdasarkan permintaan, musim, dan harga pesaing.  
+
+    🔹 **Tingkatkan Fitur Bernilai Tinggi**  
+    Properti dengan **rating tamu dan kebersihan yang lebih tinggi** cenderung dapat menetapkan harga premium.  
+    Dorong host untuk meningkatkan kualitas layanan agar mendapatkan rating yang lebih baik.  
+    Soroti **kedekatan dengan pusat kota dan stasiun metro** sebagai nilai jual utama dalam deskripsi listing.  
+
+    🔹 **Perkuat Daya Saing**  
+    Bandingkan harga dengan pesaing di lokasi serupa untuk memastikan harga yang kompetitif namun tetap menguntungkan.  
+    Gunakan wawasan dari **model prediktif** untuk membantu host menetapkan harga optimal dan meningkatkan total pendapatan.  
+""", unsafe_allow_html=True) 
+
+elif page == "Conclusion":
+    st.markdown("<h1 style='text-align: center; color: white;'>Conclusion</h1>", unsafe_allow_html=True)
+    st.markdown("""
+        🔹 **Host Airbnb dapat dengan percaya diri menggunakan prediksi ini untuk menetapkan harga yang kompetitif dan optimal.**  
+        🔹 **Menyarankan harga yang lebih akurat** sesuai dengan ekspektasi pelanggan.  
+        🔹 **Model harga yang lebih baik** membantu mengurangi pembatalan dan meningkatkan kepuasan tamu.  
+        🔹 **Tingkat hunian yang lebih tinggi** dan pemesanan ulang dapat dicapai dengan strategi harga yang tepat.  
+    """, unsafe_allow_html=True)
